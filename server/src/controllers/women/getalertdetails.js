@@ -1,4 +1,4 @@
-import { db } from "../firebaseadmin/firebaseadmin.js";
+import { db } from "../../firebaseadmin/firebaseadmin.js";
 
 const getAlertDetails = async (req, res) => {
   try {

@@ -28,6 +28,7 @@ import WomenSafetyAdmin from "./pages/administration/women/WomenSafetyAdmin";
 import WomenSafetyZoneDetails from "./pages/administration/women/WomenSafetyZoneDetails";
 import WomenSafetyRoom from "./pages/administration/women/WomenSafetyRoom"
 import GarbageAdmin from "./pages/administration/garbage/garbage";
+import WaterComplaintsPage from "./pages/features/water/index"
 import GarbageReports from "./pages/reports/garbage/garbageReport";
 import TrackReport from "./pages/reports/track/TrackReports";
 
@@ -50,6 +51,16 @@ function App() {
               <CivicHub />
             </ProtectedRoute>
           }
+        />
+        <Route
+        path="/water"
+        element={
+          <ProtectedRoute>
+            <WaterComplaintsPage/>
+          </ProtectedRoute>
+        }
+        
+        
         />
         
 
@@ -158,6 +169,7 @@ function App() {
             </ProtectedRoute>
           }
         />
+        //we will add route here //
 
         <Route
           path="/deforestation"

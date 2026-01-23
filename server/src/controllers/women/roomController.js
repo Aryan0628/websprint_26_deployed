@@ -1,4 +1,4 @@
-import { db } from "../firebaseadmin/firebaseadmin.js";
+import { db } from "../../firebaseadmin/firebaseadmin.js";
 const getSuspiciousActivity = async (req, res) => {
   try {
     const { roomId } = req.body; 

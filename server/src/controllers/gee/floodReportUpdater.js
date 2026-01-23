@@ -1,15 +1,14 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { db } from "../firebaseadmin/firebaseadmin.js";
-import { runCoastalCheck } from "../gee/earth/coastal_erosion/landsat_coastal.js"; 
-import { sendEmail } from "../utils/sendEmail.js"; 
+import { db } from "../../firebaseadmin/firebaseadmin.js";
+import { runCoastalCheck } from "../../gee/earth/coastal_erosion/landsat_coastal.js";
+import { sendEmail } from "../../utils/sendEmail.js"; 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-export const updateCoastalReports = async (req, res) => {
-  console.log("🔄 Starting Daily Coastal Erosion Report Update Cycle...");
+export const updateFloodReports = async (req, res) => {
+  console.log("🔄 Starting Daily Flood Report Update Cycle...");
 
   try {
     let credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
@@ -27,9 +26,7 @@ export const updateCoastalReports = async (req, res) => {
         console.error("❌ GEE credentials file not found");
         return;
     }
-
-    // 1. FIX: Use 'collectionGroup' to find ALL alerts from ALL users
-    const alertsSnap = await db.collectionGroup("coastal_erosion_alerts").get();
+    const alertsSnap = await db.collectionGroup("coastal_alerts").get();
 
     if (alertsSnap.empty) {
       console.log("No active alerts found.");
@@ -38,15 +35,10 @@ export const updateCoastalReports = async (req, res) => {
     }
 
     const updates = [];
-
     for (const doc of alertsSnap.docs) {
         const alertId = doc.id;           
         const alertData = doc.data(); 
         const reportRef = alertData.reportRef;
-       
-
-        // 2. FIX: Extract userId from the document path
-        // Path is: Alerts/{userId}/deforestation_alerts/{alertId}
         const userId = doc.ref.parent.parent.id; 
 
         if (!reportRef) {
@@ -55,8 +47,7 @@ export const updateCoastalReports = async (req, res) => {
         }
 
         try {
-            // Now we have the correct userId to look up the report
-            const reportDocRef = db.collection("coastal_reports")
+            const reportDocRef = db.collection("flood_reports")
                                    .doc(userId)
                                    .collection("reports")
                                    .doc(reportRef);
@@ -69,24 +60,27 @@ export const updateCoastalReports = async (req, res) => {
             }
  
             const reportData = reportSnap.data();
-
             let regionGeoJson;
             if (typeof reportData.regionGeoJson === 'string') {
                  regionGeoJson = JSON.parse(reportData.regionGeoJson);
             } else {
                  regionGeoJson = reportData.regionGeoJson;
             }
-            const region_id = reportData.region_id;
-            const historic_year = reportData.historic_year || 2000;
-            const currentYear = reportData.currentYear || 2024;
-            console.log(`🌍 Running analysis for report: ${reportRef} (User: ${userId})`);
+            const regionId = reportData.region_id;
+            const buffermeters = reportData.parameters?.bufferMeters || 1000;
+            const recentDays = reportData.parameters?.recentDays || 90;
+            const thresholdPercent = reportData.parameters?.threshold_percent || 5.0; 
 
+            console.log(`🌍 Running analysis for report: ${reportRef} (User: ${userId})`);
+            console.log(`Parameters - Region: ${regionId}, Buffer: ${buffermeters}m, Baseline Days: ${recentDays}, Threshold: ${thresholdPercent}%`);
+            
             const analysisResult = await runCoastalCheck(
                 regionGeoJson,  
-                region_id, 
+                regionId, 
                 credentialsPath, 
-                historic_year,
-                currentYear
+                thresholdPercent,
+                buffermeters, 
+                recentDays  
             );
 
             if (analysisResult && analysisResult.status === 'success') {
@@ -99,33 +93,30 @@ export const updateCoastalReports = async (req, res) => {
                 console.log(`✅ Update queued for report: ${reportRef}`);
 
                 if (analysisResult.alert_triggered === true) {
-                    console.log(`🚨 ALERT TRIGGERED for ${region_id}. Fetching user email...`);
-                    
-                    // 3. FIX: Fetch user from the 'users' collection using the extracted userId
+                    console.log(`🚨 ALERT TRIGGERED for ${regionId}. Fetching user email...`);
                     const userDoc = await db.collection("users").doc(userId).get();
                     
                     if (userDoc.exists && userDoc.data().email) {
                         const userEmail = userDoc.data().email;
-                        
                         await sendEmail({
                             to: userEmail,
-                            subject: `🚨 Deforestation Alert: ${region_id}`,
-                            text: `Alert detected in ${region_id}. Forest loss: ${analysisResult.mean_ndvi_change}%`,
+                            subject: `🚨 Flood Alert: ${regionId}`, 
+                            text: `Alert detected in ${regionId}. Water Change Detected: ${analysisResult.flooded_percentage}%`, // Fixed context
                             html: `
-                                <h3>Deforestation Alert Triggered</h3>
-                                <p>Region: <b>${region_id}</b></p>
-                                <p>Forest Loss(NDVI): <b>${analysisResult.mean_ndvi_change}</b></p>
-                                <p>Threshold: <b>${threshold}%</b></p>
+                                <h3>Flood Alert Triggered</h3>
+                                <p>Region: <b>${regionId}</b></p>
+                                <p>Water/Land Change: <b>${analysisResult.flooded_percentage || 'Check Dashboard'}%</b></p>
+                                <p>Threshold: <b>${thresholdPercent}%</b></p>
                                 <p>Please check your dashboard immediately.</p>
                             `
-                        });
+                        }); 
                     } else {
                         console.warn(`Cannot send email: No email found for user ${userId} in 'users' collection.`);
                     }
                 }
 
             } else {
-                console.error(`❌ Analysis failed for ${region_id}:`, analysisResult?.message);
+                console.error(`❌ Analysis failed for ${regionId}:`, analysisResult?.message);
             }
 
         } catch (innerError) {

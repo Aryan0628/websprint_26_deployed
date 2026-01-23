@@ -1,6 +1,6 @@
 import multer from 'multer';
-import { db } from "../firebaseadmin/firebaseadmin.js";
-import { uploadVoiceCloudinary } from "../utils/uploadVoiceCloudinary.js";
+import { db } from "../../firebaseadmin/firebaseadmin.js";
+import { uploadVoiceCloudinary } from "../../utils/uploadVoiceCloudinary.js";
 
 // Switch to Memory Storage (much faster for cloud uploads)
 const storage = multer.memoryStorage();

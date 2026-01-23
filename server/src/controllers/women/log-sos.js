@@ -1,4 +1,4 @@
-import { db } from "../firebaseadmin/firebaseadmin.js";
+import { db } from "../../firebaseadmin/firebaseadmin.js";
 const log_sos=async(req,res)=>{
     const { routeId, userId, context, score } = req.body;
     try {

@@ -1,6 +1,6 @@
 
 import admin from "firebase-admin";
-import { db } from "../firebaseadmin/firebaseadmin.js";
+import { db } from "../../firebaseadmin/firebaseadmin.js";
 const room_data=async(req,res)=>{
     try {
         const { roomId, userId, message } = req.body;

@@ -17,8 +17,8 @@ import complaintRoutes from "./src/routes/complaint.routes.js";
 import complaintStatsRoutes from "./src/routes/complaintStats.routes.js";
 import complaintHistoryRoutes from "./src/routes/complaintHistory.routes.js";
 import voiceRoutes from "./src/routes/voiceRoutes.js"
-import garbageReport from "./src/routes/garbageReports.js"
-
+import localityRoutes from "./src/routes/locality.routes.js"
+import reportRoutes from "./src/routes/report.routes.js"
 const app = express();
 
 /* ---------------- MIDDLEWARE ---------------- */
@@ -56,9 +56,8 @@ app.use("/api/complaints", complaintRoutes);
 app.use("/api/complaint-stats",complaintStatsRoutes);
 app.use("/api/complaint-history",complaintHistoryRoutes);
 app.use("/api/voice",voiceRoutes);
-
-//  reports
-app.use("/api/reports/garbage",garbageReport);
+app.use("/api/locality",localityRoutes)
+app.use("/api/reports",reportRoutes)
 
 app.get("/health", (req, res) => res.status(200).json({ message: "server is healthy" }));
 

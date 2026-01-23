@@ -27,3 +27,8 @@ regex
 httpx
 typing-extensions
 tiktoken
+#--Tokens---
+jwt
+
+Pillow
+google-generativeai

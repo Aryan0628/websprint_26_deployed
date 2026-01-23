@@ -1,15 +1,15 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
-import { db } from "../firebaseadmin/firebaseadmin.js";
-import { runFireProtectionCheck } from "../gee/earth/fire/viirs_fire_monitor.js"; 
-import { sendEmail } from "../utils/sendEmail.js"; 
+import { db } from "../../firebaseadmin/firebaseadmin.js";
+import { runCoastalCheck } from "../../gee/earth/coastal_erosion/landsat_coastal.js"; 
+import { sendEmail } from "../../utils/sendEmail.js"; 
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export const updateFireReports = async (req, res) => {
-  console.log("🔄 Starting Daily Fire Report Update Cycle...");
+export const updateCoastalReports = async (req, res) => {
+  console.log("🔄 Starting Daily Coastal Erosion Report Update Cycle...");
 
   try {
     let credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
@@ -27,7 +27,9 @@ export const updateFireReports = async (req, res) => {
         console.error("❌ GEE credentials file not found");
         return;
     }
-    const alertsSnap = await db.collectionGroup("fire_alerts").get();
+
+    // 1. FIX: Use 'collectionGroup' to find ALL alerts from ALL users
+    const alertsSnap = await db.collectionGroup("coastal_erosion_alerts").get();
 
     if (alertsSnap.empty) {
       console.log("No active alerts found.");
@@ -41,13 +43,20 @@ export const updateFireReports = async (req, res) => {
         const alertId = doc.id;           
         const alertData = doc.data(); 
         const reportRef = alertData.reportRef;
+       
+
+        // 2. FIX: Extract userId from the document path
+        // Path is: Alerts/{userId}/deforestation_alerts/{alertId}
         const userId = doc.ref.parent.parent.id; 
+
         if (!reportRef) {
             console.warn(`⚠️ Skipping Alert ${alertId}: Missing reportRef.`);
             continue;
         }
+
         try {
-            const reportDocRef = db.collection("fire_reports")
+            // Now we have the correct userId to look up the report
+            const reportDocRef = db.collection("coastal_reports")
                                    .doc(userId)
                                    .collection("reports")
                                    .doc(reportRef);
@@ -60,23 +69,24 @@ export const updateFireReports = async (req, res) => {
             }
  
             const reportData = reportSnap.data();
+
             let regionGeoJson;
             if (typeof reportData.regionGeoJson === 'string') {
                  regionGeoJson = JSON.parse(reportData.regionGeoJson);
             } else {
                  regionGeoJson = reportData.regionGeoJson;
             }
-            const regionId = reportData.region_id;
-            const buffermeters = reportData.parameters?.buffer || 5000;
-            const previousDays = reportData.parameters?.daysBack || 5; 
+            const region_id = reportData.region_id;
+            const historic_year = reportData.historic_year || 2000;
+            const currentYear = reportData.currentYear || 2024;
             console.log(`🌍 Running analysis for report: ${reportRef} (User: ${userId})`);
-            console.log(`Parameters - Region: ${regionId}, Buffer: ${buffermeters}m, Baseline Days: ${previousDays}, Threshold: ${threshold}%`);
-            const analysisResult = await runFireProtectionCheck(
+
+            const analysisResult = await runCoastalCheck(
                 regionGeoJson,  
-                regionId, 
-                credentialsPath,  
-                previousDays ,
-                buffermeters,   
+                region_id, 
+                credentialsPath, 
+                historic_year,
+                currentYear
             );
 
             if (analysisResult && analysisResult.status === 'success') {
@@ -87,39 +97,47 @@ export const updateFireReports = async (req, res) => {
                 });
                 updates.push(updatePromise);
                 console.log(`✅ Update queued for report: ${reportRef}`);
+
                 if (analysisResult.alert_triggered === true) {
-                    console.log(`🚨 ALERT TRIGGERED for ${regionId}. Fetching user email...`);
+                    console.log(`🚨 ALERT TRIGGERED for ${region_id}. Fetching user email...`);
+                    
+                    // 3. FIX: Fetch user from the 'users' collection using the extracted userId
                     const userDoc = await db.collection("users").doc(userId).get();
+                    
                     if (userDoc.exists && userDoc.data().email) {
                         const userEmail = userDoc.data().email;
+                        
                         await sendEmail({
                             to: userEmail,
-                            subject: `🔥 Fire Alert: ${regionId}`,
-                            text: `URGENT: Active fires detected in region ${regionId}. Fire Count: ${analysisResult.active_fire_count}. Scan Window: ${analysisResult.dates?.scan_window_start} to ${analysisResult.dates?.scan_window_end}.`,
+                            subject: `🚨 Deforestation Alert: ${region_id}`,
+                            text: `Alert detected in ${region_id}. Forest loss: ${analysisResult.mean_ndvi_change}%`,
                             html: `
-                                <h3>🔥 Fire Alert Triggered</h3>
-                                <p><b>Region:</b> ${regionId}</p>
-                                <p><b>Active Fire Pixel Detected:</b> <span style="color:red; font-size:18px;">${analysisResult.active_fire_count}</span></p>
-                                <p><b>Scan Period:</b> ${analysisResult.dates?.scan_window_start} to ${analysisResult.dates?.scan_window_end}</p>
-                                <p><b>Buffer Zone:</b> ${analysisResult.parameters?.buffer} meters</p>
-                                <br/>
-                                <p>Please check your Dashboard immediately for </p>
+                                <h3>Deforestation Alert Triggered</h3>
+                                <p>Region: <b>${region_id}</b></p>
+                                <p>Forest Loss(NDVI): <b>${analysisResult.mean_ndvi_change}</b></p>
+                                <p>Threshold: <b>${threshold}%</b></p>
+                                <p>Please check your dashboard immediately.</p>
                             `
                         });
                     } else {
                         console.warn(`Cannot send email: No email found for user ${userId} in 'users' collection.`);
                     }
                 }
+
             } else {
-                console.error(`❌ Analysis failed for ${regionId}:`, analysisResult?.message);
+                console.error(`❌ Analysis failed for ${region_id}:`, analysisResult?.message);
             }
+
         } catch (innerError) {
             console.error(`❌ Error processing alert ${alertId}:`, innerError.message);
         }
     }
     await Promise.all(updates);
+
     console.log(`🎉 Cycle Complete. Updated ${updates.length} reports.`);
+    
     if (res) return res.status(200).json({ success: true, updated: updates.length });
+
   } catch (error) {
     console.error("❌ Critical Cron Job Error:", error);
     if (res) return res.status(500).json({ error: error.message });

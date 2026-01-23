@@ -1,4 +1,4 @@
-import { db } from "../firebaseadmin/firebaseadmin.js";
+import { db } from "../../firebaseadmin/firebaseadmin.js";
 const throttle_room = async (req, res) => {
     const { triggeredByUserId, routeId, aiAnalysis, alertLevel, timestamp } = req.body;
     
