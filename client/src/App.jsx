@@ -28,7 +28,8 @@ import WomenSafetyAdmin from "./pages/administration/women/WomenSafetyAdmin";
 import WomenSafetyZoneDetails from "./pages/administration/women/WomenSafetyZoneDetails";
 import WomenSafetyRoom from "./pages/administration/women/WomenSafetyRoom"
 import GarbageAdmin from "./pages/administration/garbage/garbage";
-
+import GarbageReports from "./pages/reports/garbage/garbageReport";
+import TrackReport from "./pages/reports/track/TrackReports";
 
 function App() {
   const location = useLocation();
@@ -51,6 +52,15 @@ function App() {
           }
         />
         
+
+        <Route
+          path="/track/:id"
+          element={
+            <ProtectedRoute>
+              <TrackReport />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/administration/garbage"
           element={
@@ -242,6 +252,14 @@ function App() {
           element={
             <ProtectedRoute>
               <SurfaceHeatResult />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ecosnap/reports"
+          element={
+            <ProtectedRoute>
+              <GarbageReports />
             </ProtectedRoute>
           }
         />
