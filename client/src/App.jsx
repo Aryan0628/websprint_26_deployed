@@ -28,7 +28,7 @@ import WomenSafetyAdmin from "./pages/administration/women/WomenSafetyAdmin";
 import WomenSafetyZoneDetails from "./pages/administration/women/WomenSafetyZoneDetails";
 import WomenSafetyRoom from "./pages/administration/women/WomenSafetyRoom"
 import GarbageAdmin from "./pages/administration/garbage/garbage";
-import WaterComplaintsPage from "./pages/features/water/index"
+import ComplaintsPage from "./pages/features/reports/index"
 function App() {
   const location = useLocation();
   const showNavbar = ["/", "/mission", "/about"].includes(location.pathname);
@@ -53,7 +53,7 @@ function App() {
         path="/water"
         element={
           <ProtectedRoute>
-            <WaterComplaintsPage/>
+            <ComplaintsPage/>
           </ProtectedRoute>
         }
         
