@@ -36,6 +36,11 @@ import WasteStaffDashboard from "./pages/staff/waste/wasteStaff";
 import AssignTask from "@/pages/administration/muncipal/waste/assignTask"
 import InfraStaffDashboard from "./pages/staff/infra/infraStaff";
 import AssignInfraTask from "./pages/administration/muncipal/infra/assignInfraTask";
+import ElectricityAdmin from "./pages/administration//electricity/electricity";
+import ElectricityStaffDashboard from "./pages/staff/electricity/ElectricityStaff";
+import AssignElectricityTask from "./pages/administration/electricity/assignTask";
+
+
 
 function App() {
   const location = useLocation();
@@ -294,6 +299,15 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+         path="/administration/electricity"
+            element={
+             <ProtectedRoute>
+              <ElectricityAdmin />
+            </ProtectedRoute>
+          }
+/>
+
 
           {/* staff  */}
           <Route
@@ -329,6 +343,25 @@ function App() {
             </ProtectedRoute>
           }
         />
+     // Electricity Staff Dashboard
+        <Route
+           path="/staff/electricity"
+             element={
+               <ProtectedRoute>
+                   <ElectricityStaffDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
+              // Assign Electricity Task
+         <Route
+           path="/assign/electricity/:geoHash"
+             element={
+                  <ProtectedRoute>
+                    <AssignElectricityTask />
+                  </ProtectedRoute>
+                }
+              />
 
 
 
