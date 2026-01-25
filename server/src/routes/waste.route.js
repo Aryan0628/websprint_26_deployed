@@ -8,6 +8,10 @@ import { fetchWasteZones,fetchInfraZones,fetchElectricityZones } from "../contro
 router.get("/waste/reports",fetchWasteZones)
 router.get("/infra/reports",fetchInfraZones)
 router.get("/electricity/reports",fetchElectricityZones)
+import { fetchWasteZones,fetchInfraZones,fetchWaterZones } from "../controllers/administration/waste.controller.js"
+router.get("/waste/reports",fetchWasteZones)
+router.get("/infra/reports",fetchInfraZones)
+router.get("/water/reports",fetchWaterZones)
 
 
 

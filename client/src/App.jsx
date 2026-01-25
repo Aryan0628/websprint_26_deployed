@@ -41,6 +41,10 @@ import ElectricityStaffDashboard from "./pages/staff/electricity/ElectricityStaf
 import AssignElectricityTask from "./pages/administration/electricity/assignTask";
 
 
+import WaterStaffDashboard from "./pages/staff/water/waterStaff"
+import WaterAdmin from "./pages/administration/muncipal/water/water"
+import AssignWaterTask from "./pages/administration/muncipal/water/assignWaterTask"
+ 
 
 function App() {
   const location = useLocation();
@@ -308,6 +312,13 @@ function App() {
           }
 />
 
+          path="/administration/municipal/water"
+          element={
+            <ProtectedRoute >
+              <WaterAdmin />
+            </ProtectedRoute>
+          }
+        />
 
           {/* staff  */}
           <Route
@@ -318,11 +329,19 @@ function App() {
             </ProtectedRoute>
           }
         />
-          <Route
+        <Route
           path="/staff/infra"
           element={
             <ProtectedRoute >
               < InfraStaffDashboard/>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/staff/water"
+          element={
+            <ProtectedRoute >
+              < WaterStaffDashboard/>
             </ProtectedRoute>
           }
         />
@@ -362,6 +381,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+        <Route
+          path="/assign/water/:geoHash"
+          element={
+            <ProtectedRoute >
+              <AssignWaterTask />
+            </ProtectedRoute>
+          }
+        />
 
 
 
