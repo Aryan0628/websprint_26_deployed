@@ -12,6 +12,8 @@ import { updateelectricityReports } from "../controllers/updateReports/electrici
 import {fetch3Reports} from "../controllers/fetchReports/fetch3Reports.js"
 import { checkJwt } from "../auth/authMiddleware.js"
 import {resolveReport} from "../controllers/report/report.controller.js"
+import { saveFireReport } from "../controllers/aiReports/fireReports.js";          // 🔥 NEW
+import { updateFireReports } from "../controllers/updateReports/fireUpdate.js";    // 🔥 NEW
 
 router.post('/waterReports',saveWaterReport)
 router.post('/wasteReports',saveWasteReport)
@@ -24,5 +26,8 @@ router.post('/updateinfrastructureReports',updateInfrastructureReports)
 router.post('/updateelectricityReports',updateelectricityReports)
 router.post('/fetch3Reports',checkJwt,fetch3Reports)
 router.put('/resolve',resolveReport)
+router.post('/fireReports', saveFireReport);                // 🔥 NEW
+router.post('/updatefireReports', updateFireReports);       // 🔥 NEW
+
 
 export default router
