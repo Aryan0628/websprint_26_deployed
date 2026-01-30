@@ -41,7 +41,7 @@ import WaterAdmin from "./pages/administration/muncipal/water/water"
 import AssignWaterTask from "./pages/administration/muncipal/water/assignWaterTask"
 import UserReportsDashboard from "./pages/reports/user/userReportDashboard";
 import ComplaintsPage from "./pages/features/reports/index";
-
+import NotificationFeed from "./components/NotificationFeed"
  
 
 function App() {
@@ -61,6 +61,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CivicHub />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notification"
+          element={
+            <ProtectedRoute>
+              <NotificationFeed />
             </ProtectedRoute>
           }
         />
