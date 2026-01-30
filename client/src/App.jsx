@@ -45,7 +45,7 @@ import ElectricityStaffDashboard from "./pages/staff/electricity/ElectricityStaf
 import ElectricityAdmin from "./pages/administration/muncipal/electricity/electricity";
 import AssignElectricityTask from "./pages/administration/muncipal/electricity/assignTask";
 import FireAdmin from "./pages/administration/muncipal/fire/fire";
-import FireStaffDashboard from "./pages/staff/fire/fireStaff";
+import FireStaffDashboard from "./pages/staff/fire/firestaff";
 
 
  

@@ -21,7 +21,6 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { FireSOSButton } from "./fireAlert.jsx"
-
 import { ref, onValue, off, update, get } from "firebase/database";
 import { db } from "../firebase/firebase"; 
 
