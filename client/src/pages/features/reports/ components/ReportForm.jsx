@@ -11,7 +11,8 @@ import { db } from "../../../../firebase/firebase"; // double-check this path
 export default function ReportForm({ userLocation, userAddress, onSubmitSuccess }) {
   const [step, setStep] = useState("idle"); 
   const [imagePreview, setImagePreview] = useState(null);
-  const [showMap, setShowMap] = useState(false);
+  const [showMap, setShowMap] = useState(false); // fullscreen toggle
+
   const [imageUrl, setImageUrl] = useState(null); 
   const [description, setDescription] = useState("");
   const [uploadStatus, setUploadStatus] = useState("idle"); 
@@ -86,11 +87,37 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
   }
 
   const isReady = imagePreview && uploadStatus === 'done' && userLocation;
+return (
+  <>
+    {/* ================= FULLSCREEN MAP ================= */}
+    {showMap && (
+      <div className="fixed inset-0 z-50 bg-black animate-fade-in">
+        
+        {/* TOP BAR */}
+        <div className="absolute top-0 left-0 right-0 h-14 bg-zinc-900/95 backdrop-blur border-b border-white/10 flex items-center justify-between px-4 z-50">
+          <h2 className="text-white font-bold text-sm tracking-wide">
+            📍 Public Complaints Map
+          </h2>
 
-  return (
-    <div className="flex gap-6 w-full max-w-6xl mx-auto">
-      {/* FORM SECTION */}
-      <div className={`${showMap ? "w-1/2" : "w-full"} space-y-6 transition-all duration-500`}>
+          <button
+            onClick={() => setShowMap(false)}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-lg text-xs font-semibold transition"
+          >
+            ← Back to Report
+          </button>
+        </div>
+
+        {/* MAP */}
+        <div className="w-full h-full pt-14">
+          <ComplaintMap userLocation={userLocation} />
+        </div>
+      </div>
+    )}
+
+    {/* ================= REPORT FORM ================= */}
+    {!showMap && (
+      <div className="w-full max-w-2xl mx-auto space-y-6">
+
         <div className="relative aspect-video rounded-xl border-2 border-dashed border-white/10 bg-black/20 flex flex-col items-center justify-center cursor-pointer overflow-hidden">
           {imagePreview ? (
             <img src={imagePreview} className="absolute inset-0 w-full h-full object-cover" alt="upload" />
@@ -98,14 +125,18 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
             <Camera className="text-zinc-500" />
           )}
           <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleImageUpload} />
-          {uploadStatus === "uploading" && <div className="absolute inset-0 bg-black/60 flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}
+          {uploadStatus === "uploading" && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <Loader2 className="animate-spin text-white" />
+            </div>
+          )}
         </div>
 
         <div className="bg-white/5 p-3 rounded-lg border border-white/10 text-xs text-zinc-400 truncate">
           {userAddress || "Detecting location..."}
         </div>
 
-        <textarea 
+        <textarea
           className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white h-24"
           placeholder="Details..."
           value={description}
@@ -113,25 +144,24 @@ export default function ReportForm({ userLocation, userAddress, onSubmitSuccess 
         />
 
         <div className="flex gap-2">
-          <Button onClick={() => setShowMap(!showMap)} className="flex-1 bg-purple-600 text-white">
-            {showMap ? "Hide Map" : "View Map 🗺️"}
+          <Button
+            onClick={() => setShowMap(true)}
+            className="flex-1 bg-purple-600 text-white"
+          >
+            View Map 🗺️
           </Button>
-          <Button onClick={handleSubmit} disabled={!isReady} className="flex-1 bg-blue-600 text-white">
-            {step === 'submitting' ? <Loader2 className="animate-spin" /> : "Submit"}
-          </Button>
-        </div>
-      </div>
 
-      {/* MAP SECTION */}
-      {showMap && (
-        <div className="w-1/2 h-[600px] rounded-xl border border-white/10 overflow-hidden shadow-2xl animate-in fade-in slide-in-from-right duration-500">
-          <div className="bg-zinc-900 p-2 text-[10px] text-zinc-500 font-bold flex justify-between">
-            <span>AWARENESS MAP</span>
-            <span className="text-emerald-500">● LIVE</span>
-          </div>
-          <ComplaintMap userLocation={userLocation} />
+          <Button
+            onClick={handleSubmit}
+            disabled={!isReady}
+            className="flex-1 bg-blue-600 text-white"
+          >
+            {step === "submitting" ? <Loader2 className="animate-spin" /> : "Submit"}
+          </Button>
         </div>
-      )}
-    </div>
-  );
+
+      </div>
+    )}
+  </>
+);
 }

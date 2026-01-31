@@ -2,14 +2,15 @@ import { GoogleMap, Marker, InfoWindow } from "@react-google-maps/api";
 import { useEffect, useState } from "react";
 
 const containerStyle = { width: "100%", height: "100%" };
-
 const icons = {
-  FIRE: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
-  WATER: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
-  ELECTRICITY: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
-  WASTE: "http://maps.google.com/mapfiles/ms/icons/green-dot.png",
-  INFRASTRUCTURE: "http://maps.google.com/mapfiles/ms/icons/purple-dot.png",
+  FIRE: "/icons/fire-map-report.png",
+  WATER: "/icons/water-map-report.png",
+  ELECTRICITY: "/icons/electricity-map-report.png",
+  WASTE: "/icons/waste-map-report.png",
+  INFRASTRUCTURE: "/icons/infra-map-report.png",
 };
+
+
 
 export default function ComplaintMap({ userLocation }) {
   const [markers, setMarkers] = useState([]);
@@ -84,11 +85,15 @@ const handleVote = async (report, type) => {
     <GoogleMap mapContainerStyle={containerStyle} center={userLocation} zoom={14}>
       {markers.map((m, i) => (
         <Marker
-          key={i}
-          position={{ lat: m.lat, lng: m.lng }}
-          icon={icons[m.department]}
-          onClick={() => setSelected(m)}
-        />
+            key={i}
+            position={{ lat: m.lat, lng: m.lng }}
+            onClick={() => setSelected(m)}
+            icon={{
+                url: icons[m.department],
+                scaledSize: new window.google.maps.Size(35, 35), // icon size
+  }}
+/>
+
       ))}
 
       {selected && (
