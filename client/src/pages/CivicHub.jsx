@@ -6,6 +6,7 @@ import FloatingLines from "../ui/FloatingLines.jsx";
 import PixelCard from "../ui/PixelCard.jsx";
 import logo from "../ui/logo.png";
 import { api } from "../lib/api.js"; 
+import NotificationFeed from "../components/NotificationFeed.jsx";
 import { 
   LogOut, 
   Shield, 
@@ -18,7 +19,10 @@ import {
   Cloud,
   CloudRain,
   Snowflake,
-  CheckCircle2
+  CheckCircle2,
+  Landmark,
+  Bell,
+  X 
 } from "lucide-react";
 import { FireSOSButton } from "./fireAlert.jsx"
 import { ref, onValue, off, update, get } from "firebase/database";
@@ -83,6 +87,10 @@ export default function App() {
   const [resolvedNotification, setResolvedNotification] = useState(null);
   const [weather, setWeather] = useState(null);
   const resolvedSessionIds=useRef(new Set());
+  
+  // State for toggling the notification panel
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const notificationRef = useRef(null);
 
   useEffect(() => {
     if (auth0User && !storedUser) {
@@ -239,6 +247,21 @@ export default function App() {
     return () => unsubscribeReport();
   }, [storedUser]);
 
+  // Close notification panel when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationOpen(false);
+      }
+    }
+    if (isNotificationOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isNotificationOpen]);
+
   return (
     <div className="relative h-screen w-full bg-slate-950 text-white font-sans flex flex-col overflow-hidden selection:bg-purple-500/30">
       
@@ -325,6 +348,8 @@ export default function App() {
             City<span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-500">Beat</span>
           </h1>
         </div>
+
+        {/* User Profile & Actions */}
         <div className="flex items-center gap-4">
           
           {/* WEATHER WIDGET */}
@@ -339,12 +364,52 @@ export default function App() {
 
           <FireSOSButton />
           
+          
           {storedUser && (
             <div className="hidden md:flex items-center gap-3 bg-white/5 px-4 py-1.5 rounded-full border border-white/10 backdrop-blur-md hover:bg-white/10 transition-colors">
               <img src={storedUser.picture} alt="Profile" className="w-7 h-7 rounded-full border border-white/20" />
               <span className="text-sm font-bold text-gray-200">{storedUser.name}</span>
             </div>
           )}
+
+          {/* NOTIFICATION SECTION */}
+          <div className="relative" ref={notificationRef}>
+            {/* Bell Button */}
+            <button 
+              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              className={`p-2.5 rounded-full border transition-all active:scale-95 ${
+                isNotificationOpen 
+                  ? "bg-purple-500/20 border-purple-500/40 text-purple-300" 
+                  : "bg-white/5 border-white/10 text-gray-300 hover:bg-white/10 hover:text-white"
+              }`}
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+            </button>
+
+            {/* Notification Dropdown Panel */}
+            {isNotificationOpen && (
+              <div className="absolute right-0 top-14 w-80 sm:w-96 bg-slate-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-[60]">
+                {/* Panel Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/5 bg-white/5 backdrop-blur-md">
+                  <h3 className="font-bold text-sm text-gray-200">Notifications</h3>
+                  <button 
+                    onClick={() => setIsNotificationOpen(false)}
+                    className="p-1 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                {/* The Existing Feed Component */}
+                <div className="max-h-[400px] overflow-y-auto">
+                   <NotificationFeed  limit={5}/>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Logout Button */}
           <button 
             onClick={() => logout({ returnTo: window.location.origin })}
             className="group p-2.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all active:scale-95"
@@ -369,10 +434,10 @@ export default function App() {
         <div className="w-full max-w-7xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 pb-10">
            {FEATURES.map((feature) => (
              <PixelCard 
-                key={feature.id} 
-                variant={feature.color}
-                className="w-full aspect-[4/5] cursor-pointer hover:scale-[1.02] transition-transform duration-300 bg-zinc-900/40"
-                onClick={() => navigate(feature.route)}
+               key={feature.id} 
+               variant={feature.color}
+               className="w-full aspect-[4/5] cursor-pointer hover:scale-[1.02] transition-transform duration-300 bg-zinc-900/40"
+               onClick={() => navigate(feature.route)}
              >
                 <div className="relative z-10 flex flex-col items-center text-center p-8 h-full justify-center gap-6 pointer-events-none">
                     <div className={`p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm shadow-xl`}>

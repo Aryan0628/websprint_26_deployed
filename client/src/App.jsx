@@ -48,6 +48,7 @@ import FireAdmin from "./pages/administration/muncipal/fire/fire";
 import FireStaffDashboard from "./pages/staff/fire/firestaff";
 
 
+import NotificationFeed from "./components/NotificationFeed"
  
 
 function App() {
@@ -67,6 +68,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CivicHub />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notification"
+          element={
+            <ProtectedRoute>
+              <NotificationFeed />
             </ProtectedRoute>
           }
         />

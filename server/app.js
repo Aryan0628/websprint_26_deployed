@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
+
 // Route Imports
 import authRoutes from "./src/routes/auth.js";
 import roomRoutes from "./src/routes/room.js";
@@ -24,7 +25,6 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // 🔥 FIXES req.body undefined
 
-
 console.log("CORS ORIGIN:", process.env.CORS_ORIGIN);
 
 app.use(
@@ -38,6 +38,36 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+
+
+
+export const clients = {};
+
+app.get('/notifications/:userId', (req, res) => {
+    const { userId } = req.params;
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+
+    clients[userId] = res;
+    
+    
+    res.write(`data: ${JSON.stringify({ type: 'connection_ack', message: 'Connected!' })}\n\n`);
+    
+    console.log(`[SSE] User connected: ${userId}`);
+
+    
+    req.on('close', () => {
+        console.log(`[SSE] User disconnected: ${userId}`);
+        delete clients[userId];
+    });
+});
+
+
+import notification  from "./src/routes/notification.route.js";
+app.use("/api/notifications",notification);
 
 
 
