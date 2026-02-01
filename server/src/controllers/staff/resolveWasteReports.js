@@ -2,8 +2,7 @@ import { db } from "../../firebaseadmin/firebaseadmin.js";
 import admin from 'firebase-admin';
 import axios from 'axios';
 import { sendEmail } from "../../utils/sendEmail.js";
-// Make sure to import this helper function
-// import { pushNotificationToUser } from "../../utils/notificationService.js"; 
+import {pushNotificationToUser} from "../../utils/pushNotification.js"
 
 export const resolveWasteReports = async (req, res) => {
     const { 

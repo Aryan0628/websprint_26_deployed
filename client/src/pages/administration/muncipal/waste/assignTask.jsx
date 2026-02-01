@@ -4,8 +4,6 @@ import { getDatabase, ref, onValue, off } from "firebase/database";
 import { 
   ArrowLeft, User, MapPin, Send, CheckCircle2, AlertOctagon, Clock, Zap, X
 } from "lucide-react";
-
-// FIX 1: Correct Relative Import Path (Adjust if needed based on folder structure)
 import { api } from "../../../../lib/api"; 
 import { useAuth0 } from "@auth0/auth0-react";
 

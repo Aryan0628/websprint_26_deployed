@@ -2,12 +2,22 @@ import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth0 } from "@auth0/auth0-react"
 import { 
-  Globe, ShieldCheck, Trash2, LogOut, Building2,    
-  Factory, CheckCircle2, HardHat, Droplets, Zap, 
-  Flame, Activity, ArrowRight
+  Globe,        
+  ShieldCheck, 
+  Trash2,       
+  LogOut,
+  Building2,    
+  Factory,            
+  CheckCircle2,
+  HardHat,
+  Droplets,
+  Zap,
+  Flame,
+  Activity,
+  ArrowRight
 } from "lucide-react"
 import { useAuthStore } from "../../store/useAuthStore.js"
-import { api } from "../../lib/api.js" 
+import { api } from "../../lib/api.js" // Imported your API helper
 
 export default function CityAdminHub() {
   const navigate = useNavigate()
@@ -35,21 +45,23 @@ export default function CityAdminHub() {
     }
   }, [auth0User, storedUser, setUser])
 
-  // 2. Fetch Data
+  // 2. Fetch Data (Refactored to use api.js)
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // We use Promise.allSettled so both requests run in parallel.
+        // If one fails, the other can still succeed.
         const [mapRes, statsRes] = await Promise.allSettled([
           api.get('/map-reports'),
           api.get('/api/reports/reportsCount')
         ]);
 
-        // Handle Map Count
+        // A. Handle Map Complaints Count
         if (mapRes.status === 'fulfilled' && mapRes.value.data.success) {
           setComplaintCount(mapRes.value.data.data.length);
         }
 
-        // Handle Department Stats
+        // B. Handle Department Counts
         if (statsRes.status === 'fulfilled' && statsRes.value.status === 200) {
             const statsData = statsRes.value.data;
             setDeptStats({
@@ -60,6 +72,7 @@ export default function CityAdminHub() {
                 fire: 0 
             });
         }
+
       } catch (err) {
         console.error("Error fetching dashboard data", err);
       }
@@ -71,7 +84,7 @@ export default function CityAdminHub() {
   // Calculate Total Alerts for Footer
   const totalDepartmentAlerts = Object.values(deptStats).reduce((a, b) => a + b, 0);
 
-  // --- CONFIGURATION ARRAYS ---
+  // --- SECTION 1: INTELLIGENT SYSTEMS ---
   const COMMAND_SYSTEMS = [
     {
       id: "geoscope",
@@ -93,12 +106,12 @@ export default function CityAdminHub() {
     },
   ]
 
+  // --- SECTION 2: DEPARTMENTAL OPERATIONS ---
   const MUNICIPAL_DEPARTMENTS = [
     {
       id: "infrastructure",
       title: "Infrastructure",
-      countText: `${deptStats.infrastructure} Issues`,
-      rawValue: deptStats.infrastructure,
+      count: `${deptStats.infrastructure} Issues`,
       icon: HardHat,
       route: "/administration/municipal/infrastructure",
       theme: "orange"
@@ -106,8 +119,7 @@ export default function CityAdminHub() {
     {
       id: "water",
       title: "Water Supply",
-      countText: `${deptStats.water} Alerts`, 
-      rawValue: deptStats.water,
+      count: `${deptStats.water} Alerts`, 
       icon: Droplets,
       route: "/administration/municipal/water",
       theme: "blue"
@@ -115,17 +127,15 @@ export default function CityAdminHub() {
     {
       id: "waste",
       title: "Smart Waste",
-      countText: `${deptStats.waste} Pending`, 
-      rawValue: deptStats.waste,
+      count: `${deptStats.waste} Pending`, 
       icon: Trash2,
-      route: "/administration/garbage",
+      route: "/administration/municipal/waste",
       theme: "emerald"
     },
     {
       id: "electricity",
       title: "Electricity",
-      countText: `${deptStats.electricity} Outages`, 
-      rawValue: deptStats.electricity,
+      count: `${deptStats.electricity} Outages`, 
       icon: Zap,
       route: "/administration/municipal/electricity",
       theme: "violet"
@@ -133,8 +143,7 @@ export default function CityAdminHub() {
     {
       id: "fire",
       title: "Fire & Safety",
-      countText: "LIVE", 
-      rawValue: "LIVE",
+      count: "LIVE", // Set to LIVE for visual logic
       icon: Flame,
       route: "/administration/municipal/fire",
       theme: "red"
@@ -316,7 +325,7 @@ export default function CityAdminHub() {
                {MUNICIPAL_DEPARTMENTS.map((dept) => {
                  const Icon = dept.icon
                  const themeClass = getThemeStyles(dept.theme)
-                 const isLive = dept.rawValue === "LIVE"; 
+                 const isLive = dept.count === "LIVE";
 
                  return (
                    <button 
@@ -328,7 +337,7 @@ export default function CityAdminHub() {
                         <Icon className="w-6 h-6" />
                         
                         {/* Notification Badge Logic */}
-                        {!isLive && typeof dept.rawValue === 'number' && dept.rawValue > 0 && (
+                        {!isLive && parseInt(dept.count) > 0 && (
                           <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></span>
                         )}
                         {isLive && (
@@ -341,7 +350,7 @@ export default function CityAdminHub() {
                       </div>
                       <h3 className="font-bold text-slate-900 mb-1">{dept.title}</h3>
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${isLive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
-                        {dept.countText}
+                        {dept.count}
                       </span>
                    </button>
                  )
@@ -369,7 +378,10 @@ export default function CityAdminHub() {
                    <div className="text-2xl font-black text-white">{complaintCount}</div>
                    <div className="text-[10px] uppercase tracking-wider font-bold">Public Complaints</div>
                 </div>
-                {/* Uptime section removed */}
+                <div>
+                   <div className="text-2xl font-black text-emerald-400">98%</div>
+                   <div className="text-[10px] uppercase tracking-wider font-bold">Uptime</div>
+                </div>
              </div>
              {/* Decorative Background */}
              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
