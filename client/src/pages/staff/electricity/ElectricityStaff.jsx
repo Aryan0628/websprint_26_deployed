@@ -110,7 +110,7 @@ export default function ElectricityStaffDashboard() {
       formData.append("image", file);
       formData.append("taskId", taskId);
 
-      await api.post("/api/staff/tasks/resolve", formData, {
+      await api.post("/api/staff/tasks/resolves", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data"
