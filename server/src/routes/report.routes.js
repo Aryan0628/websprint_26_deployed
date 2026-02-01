@@ -16,6 +16,7 @@ import { saveFireReport } from "../controllers/aiReports/fireReports.js";
 import { updateFireReports } from "../controllers/updateReports/fireUpdate.js";
 import { FireReport } from "../controllers/saveReports/saveFireReport.js"
 import {FetchAdminFireHistory} from "../controllers/saveReports/fetchAdminFireHistory.js"
+import {fetchReportCount} from "../controllers/administration/fetchReportCount.js"
 router.post('/waterReports',saveWaterReport)
 router.post('/wasteReports',saveWasteReport)
 router.post('/infrastructureReports',saveInfrastructureReport)
@@ -30,8 +31,9 @@ router.put('/resolve',resolveReport)
 router.post('/fireReports', saveFireReport);                
 router.post('/updatefireReports', updateFireReports);  
 router.post('/saveFireReport',FireReport); 
-router.get('/FetchAdminFireHistory',FetchAdminFireHistory)
-  
+router.get('/FetchAdminFireHistory',FetchAdminFireHistory),
+router.get('/reportsCount',fetchReportCount)
+
 
 
 export default router

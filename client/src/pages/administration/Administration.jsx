@@ -17,42 +17,74 @@ import {
   ArrowRight
 } from "lucide-react"
 import { useAuthStore } from "../../store/useAuthStore.js"
+import { api } from "../../lib/api.js" // Imported your API helper
 
 export default function CityAdminHub() {
   const navigate = useNavigate()
   const { user: auth0User, logout } = useAuth0()
   const { setUser, user: storedUser } = useAuthStore()
+  
+  // UI State
   const [transitionStage, setTransitionStage] = useState('idle')
   const [isBarActive, setIsBarActive] = useState(false)
-  const [showComplaintsMap, setShowComplaintsMap] = useState(false)
-  const [complaintCount, setComplaintCount] = useState(0);
-
-
   
+  // Data State
+  const [complaintCount, setComplaintCount] = useState(0);
+  const [deptStats, setDeptStats] = useState({
+    waste: 0,
+    water: 0,
+    infrastructure: 0,
+    electricity: 0,
+    fire: 0 
+  });
+
+  // 1. Auth Sync
   useEffect(() => {
     if (auth0User && !storedUser) {
       setUser(auth0User)
     }
   }, [auth0User, storedUser, setUser])
+
+  // 2. Fetch Data (Refactored to use api.js)
   useEffect(() => {
-  const fetchComplaintCount = async () => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/map-reports`);
-      const data = await res.json();
+    const fetchData = async () => {
+      try {
+        // We use Promise.allSettled so both requests run in parallel.
+        // If one fails, the other can still succeed.
+        const [mapRes, statsRes] = await Promise.allSettled([
+          api.get('/map-reports'),
+          api.get('/api/reports/reportsCount')
+        ]);
 
-      if (data.success) {
-        setComplaintCount(data.data.length);
+        // A. Handle Map Complaints Count
+        if (mapRes.status === 'fulfilled' && mapRes.value.data.success) {
+          setComplaintCount(mapRes.value.data.data.length);
+        }
+
+        // B. Handle Department Counts
+        if (statsRes.status === 'fulfilled' && statsRes.value.status === 200) {
+            const statsData = statsRes.value.data;
+            setDeptStats({
+                waste: statsData.waste || 0,
+                water: statsData.water || 0,
+                infrastructure: statsData.infrastructure || 0,
+                electricity: statsData.electricity || 0,
+                fire: 0 
+            });
+        }
+
+      } catch (err) {
+        console.error("Error fetching dashboard data", err);
       }
-    } catch (err) {
-      console.error("Error fetching complaint count", err);
-    }
-  };
+    };
 
-  fetchComplaintCount();
-}, []);
+    fetchData();
+  }, []);
 
+  // Calculate Total Alerts for Footer
+  const totalDepartmentAlerts = Object.values(deptStats).reduce((a, b) => a + b, 0);
 
-  // --- SECTION 1: INTELLIGENT SYSTEMS (Original Admin Features) ---
+  // --- SECTION 1: INTELLIGENT SYSTEMS ---
   const COMMAND_SYSTEMS = [
     {
       id: "geoscope",
@@ -61,7 +93,7 @@ export default function CityAdminHub() {
       icon: Globe,
       route: "/administration/geoscope", 
       theme: "indigo",
-      specialAction: true // Triggers the loading animation
+      specialAction: true 
     },
     {
       id: "safety",
@@ -72,42 +104,38 @@ export default function CityAdminHub() {
       theme: "rose",
       specialAction: false
     },
-    
-   
-
-   
   ]
 
-  // --- SECTION 2: DEPARTMENTAL OPERATIONS (New Municipal Features) ---
+  // --- SECTION 2: DEPARTMENTAL OPERATIONS ---
   const MUNICIPAL_DEPARTMENTS = [
     {
       id: "infrastructure",
       title: "Infrastructure",
-      count: "12 Issues",
+      count: `${deptStats.infrastructure} Issues`,
       icon: HardHat,
-      route: "/administration/municipal/infra",
+      route: "/administration/municipal/infrastructure",
       theme: "orange"
     },
     {
       id: "water",
       title: "Water Supply",
-      count: "Stable",
+      count: `${deptStats.water} Alerts`, 
       icon: Droplets,
       route: "/administration/municipal/water",
       theme: "blue"
     },
     {
-      id: "garbage",
+      id: "waste",
       title: "Smart Waste",
-      count: "89% Cleared",
+      count: `${deptStats.waste} Pending`, 
       icon: Trash2,
-      route: "/administration/municipal/waste",
+      route: "/administration/garbage",
       theme: "emerald"
     },
     {
       id: "electricity",
       title: "Electricity",
-      count: "Grid Online",
+      count: `${deptStats.electricity} Outages`, 
       icon: Zap,
       route: "/administration/municipal/electricity",
       theme: "violet"
@@ -115,14 +143,13 @@ export default function CityAdminHub() {
     {
       id: "fire",
       title: "Fire & Safety",
-      count: "Active",
+      count: "LIVE", // Set to LIVE for visual logic
       icon: Flame,
       route: "/administration/municipal/fire",
       theme: "red"
     },
   ]
 
-  // Helper for dynamic colors
   const getThemeStyles = (theme) => {
     const styles = {
       indigo: "text-indigo-600 bg-indigo-50 border-indigo-100 hover:border-indigo-300 hover:shadow-indigo-100/50",
@@ -224,22 +251,19 @@ export default function CityAdminHub() {
           </div>
           <div className="flex justify-center mb-12">
               <div className="flex justify-center mb-10">
-  <button
-    onClick={() => navigate("/administration/complaints-map")}
-    className="relative bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl transition-all"
-  >
-     View Public Complaints Map
+                <button
+                  onClick={() => navigate("/administration/complaints-map")}
+                  className="relative bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl transition-all"
+                >
+                   View Public Complaints Map
 
-    {/* 🔴 LIVE COUNT BADGE */}
-    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-lg">
-      {complaintCount}
-    </span>
-  </button>
-</div>
-
+                  {/* 🔴 LIVE COUNT BADGE */}
+                  <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold w-7 h-7 flex items-center justify-center rounded-full shadow-lg">
+                    {complaintCount}
+                  </span>
+                </button>
+              </div>
             </div>
-            
-
 
           {/* === 1. CENTRAL COMMAND SYSTEMS (Top Large Cards) === */}
           <div className="mb-12">
@@ -301,6 +325,7 @@ export default function CityAdminHub() {
                {MUNICIPAL_DEPARTMENTS.map((dept) => {
                  const Icon = dept.icon
                  const themeClass = getThemeStyles(dept.theme)
+                 const isLive = dept.count === "LIVE";
 
                  return (
                    <button 
@@ -308,11 +333,23 @@ export default function CityAdminHub() {
                      onClick={() => navigate(dept.route)}
                      className={`group flex flex-col items-center text-center justify-center p-6 bg-white border border-slate-200 rounded-3xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${themeClass}`}
                    >
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 bg-white border border-slate-100 shadow-sm`}>
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110 bg-white border border-slate-100 shadow-sm relative`}>
                         <Icon className="w-6 h-6" />
+                        
+                        {/* Notification Badge Logic */}
+                        {!isLive && parseInt(dept.count) > 0 && (
+                          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white rounded-full"></span>
+                        )}
+                        {isLive && (
+                           <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                             <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border-2 border-white"></span>
+                           </span>
+                        )}
+
                       </div>
                       <h3 className="font-bold text-slate-900 mb-1">{dept.title}</h3>
-                      <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-md ${isLive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
                         {dept.count}
                       </span>
                    </button>
@@ -334,12 +371,12 @@ export default function CityAdminHub() {
              </div>
              <div className="relative z-10 flex gap-8 text-center">
                 <div>
-                   <div className="text-2xl font-black text-white">24</div>
-                   <div className="text-[10px] uppercase tracking-wider font-bold">Alerts</div>
+                   <div className="text-2xl font-black text-white">{totalDepartmentAlerts}</div>
+                   <div className="text-[10px] uppercase tracking-wider font-bold">Active Alerts</div>
                 </div>
                 <div>
-                   <div className="text-2xl font-black text-white">12</div>
-                   <div className="text-[10px] uppercase tracking-wider font-bold">Pending</div>
+                   <div className="text-2xl font-black text-white">{complaintCount}</div>
+                   <div className="text-[10px] uppercase tracking-wider font-bold">Public Complaints</div>
                 </div>
                 <div>
                    <div className="text-2xl font-black text-emerald-400">98%</div>

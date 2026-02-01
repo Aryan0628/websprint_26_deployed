@@ -12,8 +12,6 @@ export default function ComplaintsPage() {
   const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState(null);
   const [viewMode, setViewMode] = useState("form"); 
-  const [mobileTab, setMobileTab] = useState("map");
-  
   const [mapRefreshTrigger, setMapRefreshTrigger] = useState(0);
 
   const { userAddress: detectedAddress, loading: addressLoading } = useReverseGeocoding(
