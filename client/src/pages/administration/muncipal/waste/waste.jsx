@@ -11,7 +11,6 @@ import {
   ExternalLink,
   CheckCircle2,
   Clock,
-  Activity,
   Truck,
   Inbox,
   RefreshCw
@@ -26,12 +25,19 @@ export default function WasteAdmin() {
 
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // Added error state
+  const [refreshing, setRefreshing] = useState(false); // New state for background refresh
+  const [error, setError] = useState(null);
   const [selectedZone, setSelectedZone] = useState(null);
   const [activeTab, setActiveTab] = useState("current"); 
 
-  const fetchZones = async () => {
-    setLoading(true);
+  const fetchZones = async (isManualRefresh = false) => {
+    // Only trigger full page loading on first load, not on manual refresh
+    if (isManualRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    
     setError(null);
     try {
       const res = await api.get("/api/municipal/waste/reports");
@@ -43,18 +49,18 @@ export default function WasteAdmin() {
     } catch (error) {
       console.error("Error fetching zones:", error);
       setError("Failed to load waste data. Please try again.");
-      setZones([]);
+      if (!isManualRefresh) setZones([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    // We only fetch if the user session is initialized
     if (storedUser) {
       fetchZones();
     }
-  }, [storedUser]); // Dependency on storedUser handles the "refresh only" issue
+  }, [storedUser]);
 
   const priorityMap = {
     "CRITICAL": 0,
@@ -129,11 +135,12 @@ export default function WasteAdmin() {
 
         <div className="flex items-center gap-3">
           <button
-            onClick={fetchZones}
+            onClick={() => fetchZones(true)} 
             className="p-2 text-slate-400 hover:text-emerald-600 transition-colors"
             title="Refresh Data"
+            disabled={loading || refreshing}
           >
-            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-5 h-5 ${(loading || refreshing) ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={() => logout({ returnTo: window.location.origin })}
@@ -149,7 +156,36 @@ export default function WasteAdmin() {
           <>
             <div className="mb-8">
               <h2 className="text-3xl font-black text-slate-900 tracking-tight">Active Zones</h2>
-              <p className="text-slate-500">Localities grouped by 1.2km² Geohash clusters</p>
+              <p className="text-slate-500 mb-6">Localities grouped by 1.2km² Geohash clusters</p>
+
+              {/* --- NEW MAP CARD COMPONENT (Added) --- */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:border-emerald-200 transition-colors">
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 bg-emerald-100 rounded-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <h3 className="text-slate-900 font-semibold text-lg">Sanitation Analysis</h3>
+                    </div>
+                    <p className="text-slate-500 text-sm italic">
+                    Live visualization of waste accumulation and collection routes
+                    </p>
+                </div>
+                
+                <button
+                    onClick={() => navigate("/admin-map/WASTE")}
+                    className="group flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium px-5 py-2.5 rounded-lg transition-all duration-200 shadow-sm hover:shadow-emerald-100 hover:shadow-lg active:scale-95"
+                >
+                    <span className="text-sm">View Waste Map</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </button>
+              </div>
+              {/* --------------------------------- */}
+
             </div>
 
             {loading ? (
@@ -161,7 +197,7 @@ export default function WasteAdmin() {
               <div className="flex flex-col items-center justify-center h-64 text-center">
                 <AlertOctagon className="w-12 h-12 text-rose-500 mb-4" />
                 <p className="text-slate-600 font-medium">{error}</p>
-                <button onClick={fetchZones} className="mt-4 text-emerald-600 font-bold hover:underline">Try Again</button>
+                <button onClick={() => fetchZones(false)} className="mt-4 text-emerald-600 font-bold hover:underline">Try Again</button>
               </div>
             ) : zones.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-slate-400">
@@ -169,7 +205,7 @@ export default function WasteAdmin() {
                 <p>No active waste zones found.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${refreshing ? 'opacity-50 pointer-events-none' : ''}`}>
                 {zones.map((zone) => {
                   const reports = zone.reports || [];
                   const total = reports.length || 1; 
