@@ -46,6 +46,9 @@ import ElectricityAdmin from "./pages/administration/muncipal/electricity/electr
 import AssignElectricityTask from "./pages/administration/muncipal/electricity/assignTask";
 import FireAdmin from "./pages/administration/muncipal/fire/fire";
 import FireStaffDashboard from "./pages/staff/fire/firestaff";
+import AdminComplaintsMap from "./pages/administration/ComplaintsMapAdmin";
+import DepartmentComplaintMap from "./pages/administration/DepartmentComplaintMap";
+
 
 
 import NotificationFeed from "./components/NotificationFeed"
@@ -367,6 +370,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/administration/complaints-map" element={<AdminComplaintsMap />} />
+           <Route
+  path="/admin-map/:department"
+  element={<DepartmentComplaintMap />}
+/>
+
+
+
 
 
           {/* staff  */}
@@ -446,6 +457,7 @@ function App() {
             }
           />
       </Routes>
+      
     </>
 
   );
