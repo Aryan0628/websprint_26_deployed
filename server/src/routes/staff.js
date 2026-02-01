@@ -8,5 +8,6 @@ const router = express.Router();
 router.get('/tasks/active',checkJwt,getTask);
 router.get('/tasks/history',checkJwt,getAllPastTask);
 router.post('/tasks/assign',checkJwt,assignTask);
+router.post('/tasks/resolve',checkJwt,resolveWasteReports)
 
 export default router;
