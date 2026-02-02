@@ -1,4 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react"; 
+import RoleBasedRedirect from "./auth/RoleBasedRedirect";
 import Home from "./pages/Home";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import CivicHub from "./pages/CivicHub";
@@ -48,7 +50,7 @@ import FireStaffDashboard from "./pages/staff/fire/fireStaff";
 import AdminComplaintsMap from "./pages/administration/ComplaintsMapAdmin";
 import DepartmentComplaintMap from "./pages/administration/DepartmentComplaintMap";
 
-
+import  CircularText from "./components/CircularText"
 
 import AssignTask from "./pages/administration/muncipal/waste/assignTask";
 import NotificationFeed from "./components/NotificationFeed"
@@ -57,12 +59,28 @@ import NotificationFeed from "./components/NotificationFeed"
 function App() {
   const location = useLocation();
   const showNavbar = ["/", "/mission", "/about"].includes(location.pathname);
+  const { isAuthenticated, isLoading } = useAuth0();
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full bg-gray-900">
+        <CircularText
+          text="URBAN*FLOW*URBAN*FLOW*" // Repeated text looks better in a circle
+          onHover="speedUp"
+          spinDuration={20}
+          className="custom-class text-blue-400" // Added a color to match your theme
+        />
+      </div>
+    );
+  }
 
   return (
     <>
       {showNavbar && <Navbar />} 
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route 
+          path="/" 
+          element={ isAuthenticated ? <RoleBasedRedirect /> : <Home /> } 
+        />
         <Route path="/mission" element={<Mission />} />
         <Route path="/about" element={<AboutUs />} />
         
